@@ -7,14 +7,26 @@ h1,h2,h3,p{margin:0}
 a{color:var(--mint);text-underline-offset:.2em}
 a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 .site-hero{border-bottom:1px solid #38415a;background:linear-gradient(90deg,#0d1428 0%,#0d1428cd 37%,transparent 83%),#0d1428 url('npl-art.webp') right center / auto 110% no-repeat;box-shadow:inset 0 -2px 0 #e6596980}
-.hero-inner,.site-main,.page-intro,.site-footer{width:min(calc(100% - 2rem),1120px);margin-inline:auto}
+.hero-inner,.site-main,.site-footer{width:min(calc(100% - 2rem),1120px);margin-inline:auto}
 .hero-inner{padding:clamp(2.6rem,8vw,5.3rem) 0}
 .eyebrow{color:var(--red);letter-spacing:.13em;text-transform:uppercase;font-size:.74rem;font-weight:800}
 .site-hero h1,.page-intro h1{font-weight:850;letter-spacing:-.06em;line-height:.98}
 .site-hero h1{font-size:clamp(2.35rem,6.1vw,5.25rem);color:#fff8ef;margin-top:.6rem;text-shadow:0 2px 25px #0c1428}
 .hero-subtitle{color:#d8e1f6;margin:.9rem 0 1.5rem;font-weight:650}
-.page-intro{padding:2.6rem 0 1.4rem}
-.page-intro h1{font-size:clamp(2.4rem,6vw,4.75rem);margin-top:.45rem}
+.page-intro{
+  --header-accent:#ff7d87;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,#0d1428 0%,#0d1428e6 22%,#0d142834 60%,transparent 82%),
+    #0d1428 var(--header-art) right center / auto 100% no-repeat;
+  box-shadow:inset 0 -2px 0 color-mix(in srgb,var(--header-accent) 50%,transparent);
+}
+.page-intro .hero-inner{display:grid;align-content:center;min-height:clamp(12rem,23vw,18rem);padding:1.75rem 0}
+.page-intro .eyebrow{color:var(--header-accent)}
+.page-intro h1{font-size:clamp(2.2rem,6vw,4.75rem);margin-top:.45rem;color:#fff8ef;text-shadow:0 2px 22px #0d1428}
+.page-intro--gym{--header-art:url('headers/coach-gym.webp');--header-accent:#ffa994}
+.page-intro--lab{--header-art:url('headers/replay-lab.webp');--header-accent:#91e4f4}
+.page-intro--trophy{--header-art:url('headers/rules-trophy.webp');--header-accent:#ffcf85}
+.page-intro--hall{--header-art:url('headers/hall-of-fame.webp');--header-accent:#c5b9ff}
 .site-main{padding:1.35rem 0 2.5rem}
 .section-head{display:flex;justify-content:space-between;align-items:end;gap:.8rem;flex-wrap:wrap;margin:0 0 .85rem}
 h2{font-size:clamp(1.4rem,3vw,2.1rem);letter-spacing:-.04em;line-height:1.12}
@@ -108,6 +120,8 @@ select{font:inherit;color:var(--text);background:var(--panel);border:1px solid v
 @media(max-width:550px){
   .site-hero{background-image:linear-gradient(90deg,#0d1428 0%,#0d1428bd 72%,#0d14285e),url('npl-art.webp');background-position:center,right -2.4rem center;background-size:100% 100%,auto 102%}
   .hero-inner{padding-block:2.3rem}
+  .page-intro{background-image:linear-gradient(90deg,#0d1428 0%,#0d1428d6 30%,#0d142833 100%),var(--header-art)}
+  .page-intro .hero-inner{min-height:10.25rem}
   .home-bottom,.match-grid,.trio-grid{grid-template-columns:1fr}
   .filterbar{grid-template-columns:1fr 1fr}
   .filterbar label:last-child{grid-column:1/-1}

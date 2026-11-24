@@ -84,8 +84,11 @@ function matchup(m,id) {
 }
 function home() {
   const weeks = [...new Set(currentMatches.map(match=>match.week).filter(Number.isInteger))].sort((a,b)=>a-b);
+  const activeWeek = weeks.find(week=>week>=league.currentWeek &&
+    currentMatches.some(match=>match.week===week && match.status==='scheduled'));
+  const defaultWeek = activeWeek ?? (weeks.includes(league.currentWeek)?league.currentWeek:weeks[0]);
   const picker = byId('week-switch');
-  picker.innerHTML=optionList(weeks.map(w=>[w,'Week '+w]),weeks.at(-1));
+  picker.innerHTML=optionList(weeks.map(w=>[w,'Week '+w]),defaultWeek);
   function show(w) {
     const list = currentMatches.filter(match=>match.week===w);
     const finished = list.filter(match=>match.score).length;
