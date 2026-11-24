@@ -48,7 +48,7 @@ export function importSet(text, roster) {
   });
   if(moveNames.length>4)throw Error('A set may contain at most four moves.');
   const damaging=attacks(name);
-  const move=moveNames.map(m=>damaging.find(v=>id(v)===id(m))).find(Boolean)||'';
+  const move=moveNames.map(m=>damaging.find(v=>id(v)===id(m))).find(Boolean)||moveNames[0]||'';
   let note='Loaded '+name+' at level 50.';
   if(parsed.teraType)note+=' League rules ignore the exported Tera Type.';
   if(!parsed.ability)note+=' Assumed '+set.ability+'.';

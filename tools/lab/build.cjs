@@ -70,14 +70,16 @@ async function build() {
     form.suggestions = available.sort((a,b)=>weight(b)-weight(a)).slice(0,5);
     forms[species.name] = form;
   }
-  const excludedItems = [...gen.items].filter(i => dex.items.get(i.name).zMove || dex.items.get(i.name).zMoveType).map(i=>i.id);
+  const itemNames = [...new Set([...sv.items.all(),...gen.items].map(item=>item.name))].sort();
+  const statusMoves = Object.fromEntries(sv.moves.all().filter(m=>m.category==='Status')
+    .map(m=>[m.id,{type:m.type,effect:m.shortDesc||m.desc}]));
   const changingMoves = [...gen.moves].filter(m => {
     const entry = dex.moves.get(m.name);
     return entry.self?.boosts || entry.selfdestruct || entry.flags?.recharge || entry.flags?.charge ||
       entry.recoil || entry.forceSwitch || entry.selfSwitch || entry.drain || entry.willCrit && entry.self;
   }).map(m=>m.id);
   fs.mkdirSync('assets/lab', { recursive: true });
-  fs.writeFileSync('assets/lab/forms.js', 'window.NPLForms = '+JSON.stringify({forms, excludedItems, changingMoves, moveNames, pools})+';\n');
+  fs.writeFileSync('assets/lab/forms.js', 'window.NPLForms = '+JSON.stringify({forms, itemNames, statusMoves, changingMoves, moveNames, pools})+';\n');
   // A classic script also supports opening a downloaded branch directly from disk.
   buildSync({entryPoints:['assets/lab/app.mjs'],bundle:true,minify:true,format:'iife',supported:{'template-literal':false},outfile:'assets/lab/application.js'});
   buildSync({entryPoints:['@smogon/calc'],bundle:true,minify:true,platform:'browser',format:'iife',globalName:'NPLCalc',

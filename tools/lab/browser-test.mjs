@@ -12,12 +12,26 @@ for(const width of [1366,390]){
  await p.locator('#quick-scope [data-scope=s1all]').click();
  await p.locator('#quick-scope [data-scope=s2]').click();
  await p.getByRole('button',{name:'Scouting',exact:true}).click();
- await p.locator('#matchup-lab').click();
+ assert.equal(await p.locator('#matchup-lab').getAttribute('href'),await p.locator('#nav-lab').getAttribute('href'));
+ await p.locator('#nav-lab').click();
  await p.waitForSelector('#output .numbers');
  assert.equal(await p.locator('#coach-d').inputValue(),'coach_josh');
  await p.locator('#coach-d').selectOption('coach_drake');
  const pick=(r,k)=>p.locator('#side-'+r+' [data-key='+k+']');
+ assert.equal(await p.locator('.nav-links [aria-current=page]').innerText(),'Matchup Lab');
+ assert.equal(await p.getByRole('link',{name:/Open Showdown calculator/}).getAttribute('href'),'https://calc.pokemonshowdown.com/');
+ await pick('a','entry').selectOption('Mega Garchomp Z');
+ await pick('a','move').focus();
+ assert.equal(await p.locator('#pick-a-move [role=option]').count(),59);
+ await pick('a','move').fill('swords');await pick('a','move').press('Enter');
+ assert.match(await p.locator('#output').innerText(),/Raises the user's Attack by 2/);
+ assert.equal(await p.locator('#output .numbers').count(),0);
+ await p.locator('#compare summary').click();
+ await p.locator('#comparison').getByText(/status move/).waitFor();
+ await p.locator('#compare summary').click();
  await pick('a','entry').selectOption('Scizor');
+ await pick('a','item').fill('electrium');await pick('a','item').press('Enter');
+ assert.equal(await pick('a','item').inputValue(),'Electrium Z');
  await p.locator('#side-a summary').click();
  await p.locator('#side-a [data-paste]').fill('Arthur (Scizor) (M) @ Life Orb\nAbility: Technician\nLevel: 50\nEVs: 4 HP / 252 Atk / 252 Spe\nAdamant Nature\n- Bullet Punch\n- Protect');
  await p.locator('#side-a [data-import]').click();
@@ -58,9 +72,9 @@ for(const width of [1366,390]){
  assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  await p.goto(base+'calculator.html?coach=coach_mason&season=s1');
  assert.match(await p.locator('#notice').innerText(),/no current/);
- await p.goto(base+'coaches.html?coach=coach_brice');await p.getByRole('link',{name:'Matchup Lab'}).waitFor();
+ await p.goto(base+'coaches.html?coach=coach_brice');await p.locator('#profile').getByRole('link',{name:'Matchup Lab'}).waitFor();
  for(const [file,selector] of [['index.html','main a[href*="scouting.html"]'],['matches.html','main a[href*="replay.pokemonshowdown.com"]'],['rules.html','main'],['league-sheet.html','#sheet-standings table']]){
-   await p.goto(base+file);await p.locator(selector).first().waitFor({state:'attached'});
+   await p.goto(base+file);assert.equal(await p.locator('.nav-links').getByRole('link',{name:'Matchup Lab'}).getAttribute('href'),'calculator.html');await p.locator(selector).first().waitFor({state:'attached'});
  }
  await p.locator('[data-table=mvp]').click();assert.match(await p.locator('#standings-title').innerText(),/MVP/i);
  await p.goto(base+'matches.html?season=s1&coach=coach_schmitty');assert.equal(await p.locator('#match-season').inputValue(),'s1');

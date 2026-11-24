@@ -28,3 +28,6 @@ input[type=checkbox]{accent-color:var(--mint)}.tick:has(:checked){background:#12
 #lab textarea{resize:vertical;background:#10182a;border:1px solid #485776;color:var(--text);border-radius:.45rem;padding:.55rem;font:inherit;width:100%}.side details>label{margin:.9rem 0 .4rem}
 .lab-picker{position:relative;min-width:0}.lab-picker [role=listbox]{position:absolute;z-index:5;top:4.1rem;left:0;right:0;list-style:none;margin:0;padding:.25rem;max-height:14rem;overflow:auto;background:#10182a;border:1px solid #596b86;border-radius:.45rem;box-shadow:0 .5rem 1rem #090e1dcc}
 .lab-picker [role=option]{padding:.4rem .55rem;color:var(--text);cursor:pointer}.lab-picker [role=option]:hover,.lab-picker [aria-selected=true]{background:#22404c;color:var(--mint)}.lab-picker small:empty{display:none}
+
+.showdown-link{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.65rem 1rem;border-top:1px solid var(--line);padding:1rem 0 .25rem;color:var(--muted);font-size:.85rem}
+.showdown-link .button{font-size:inherit}

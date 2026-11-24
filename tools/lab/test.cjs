@@ -166,3 +166,15 @@ test('Game-specific learnsets, fallback titles, shared bans and nature labels',a
   assert.equal(lab.natureLabel('Hardy'),'Hardy (neutral)');
   assert.equal(lab.natures.filter(n=>lab.natureLabel(n).includes('neutral')).length,5);
 });
+
+test('Complete movepools include status moves, TMs and inherited egg moves; item catalog is searchable in full',async()=>{
+  const dragon=lab.legalMoves('Garchomp-Mega-Z');
+  assert.equal(dragon.length,59);assert.equal(dragon.filter(m=>lab.statusMove(m)).length,14);
+  for(const m of ['Protect','Swords Dance','Earthquake','Dragon Claw'])assert(dragon.includes(m));
+  assert(lab.legalMoves('Foongus').includes('Worry Seed'));
+  assert(lab.legalMoves('Hitmontop').includes('Mach Punch'));
+  for(const item of Dex.forGen(9).items.all())assert(lab.items.includes(item.name),item.name);
+  const {importSet}=await import('../../assets/lab/import.mjs');
+  const status=importSet('Scizor @ Electrium Z\n- Protect\n- Swords Dance',window.NPL_LEAGUE.coaches.coach_brice.roster);
+  assert.equal(status.move,'Protect');assert.equal(status.set.item,'Electrium Z');
+});

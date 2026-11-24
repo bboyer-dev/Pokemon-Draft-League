@@ -14,7 +14,8 @@ export const presets = {
   specialDefense: ['Specially defensive', 'Calm', [252,0,4,0,252,0]],
 };
 const table = (values) => Object.fromEntries(stats.map((s,i)=>[s,values[i]]));
-export const items = [...gen.items].filter(i=>!catalog.excludedItems.includes(i.id)).map(i=>i.name).sort();
+export const items = catalog.itemNames;
+export function statusMove(name) { return catalog.statusMoves[id(name)]; }
 export const moves = [...gen.moves].filter(m=>m.category !== 'Status' && !m.isZ && !m.isMax && m.name!=='(No Move)').map(m=>m.name).sort();
 const damagingByID=new Map(moves.map(m=>[id(m),m]));
 export function legalMoves(name) {
@@ -84,6 +85,9 @@ export function damage(a,d,moveName,settings=defaultField) {
   validate(a); validate(d);
   const f={...defaultField,...settings};
   if (!attacks(a.name).includes(moveName)) throw Error('Choose a damaging move from '+a.name+'’s '+form(a.name).source+' learnset.');
+  for(const set of [a,d]){
+    if(set.item && !gen.items.get(id(set.item)))throw Error(set.item+' is selectable, but the engine has no item data for its damage interactions.');
+  }
   if (conditionalMoves.has(moveName)) throw Error(moveName+' requires battle history, a target action or an effect outside this lab.');
   if (['Disguise','Ice Face'].includes(d.ability)) throw Error('This lab cannot resolve '+d.ability+' interception.');
   if (a.name==='Aegislash-Shield') throw Error('Choose Blade Forme for an attacking Aegislash. Stance Change occurs before it deals damage.');

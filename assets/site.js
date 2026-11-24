@@ -134,6 +134,8 @@ function coachDirectory() {
   }
   function show() {
     const coach=league.coaches[selected];
+    const labLink=byId('nav-lab');
+    if(labLink) labLink.href='calculator.html?coach='+encodeURIComponent(selected)+'&season='+encodeURIComponent(season);
     const active=season==='s2';
     const record=active?currentRecord(selected):league.historical[season][selected];
     const roster=active?coach.roster:record.roster;

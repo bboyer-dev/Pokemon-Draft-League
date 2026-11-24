@@ -1,8 +1,7 @@
 const normalize = value => value.toLowerCase().replace(/[^a-z0-9]+/g,'');
-const limit = 8;
 
 // The input is a draft search. Only a committed option changes the calculator.
-export function mountPicker(host, {key, label, values, recent, selected, allowEmpty, onSelect}) {
+export function mountPicker(host, {key, label, values, recent, selected, allowEmpty, maxResults=8, onSelect}) {
   const input = host.querySelector('input');
   const list = host.querySelector('[role=listbox]');
   const status = host.querySelector('[role=status]');
@@ -39,14 +38,14 @@ export function mountPicker(host, {key, label, values, recent, selected, allowEm
       found=[...new Set([selected,...recent,...values].filter(Boolean))];
       if(allowEmpty)found.unshift('');
     }
-    choices=found.slice(0,limit);
+    choices=found.slice(0,maxResults);
     list.replaceChildren(...choices.map((name,i)=>{
       const option=document.createElement('li');
       option.setAttribute('role','option'); option.id=listId+'-'+i; option.dataset.index=i;
       option.textContent=name||'No held item';
       return option;
     }));
-    status.textContent=!found.length?'No matches.':term&&found.length>limit?'Showing '+limit+' of '+found.length+'. Keep typing to narrow the list.':'';
+    status.textContent=!found.length?'No matches.':term&&found.length>maxResults?'Showing '+maxResults+' of '+found.length+'. Keep typing to narrow the list.':'';
     list.hidden=!choices.length;
     input.setAttribute('aria-expanded',String(!!choices.length));
     highlight(-1);

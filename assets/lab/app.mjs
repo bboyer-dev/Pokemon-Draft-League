@@ -1,6 +1,6 @@
 import {mountPicker} from './picker.mjs';
 import {importSet} from './import.mjs';
-import {damage,defaultField,draftedForms,form,items,attacks,natureLabel,natures,newSet,nextOpponent,presets,stats,applyPreset} from './model.mjs';
+import {damage,defaultField,draftedForms,form,items,attacks,legalMoves,statusMove,natureLabel,natures,newSet,nextOpponent,presets,stats,applyPreset} from './model.mjs';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const opt=(value,label,selected)=>'<option value="'+escape(value)+'"'+(value===selected?' selected':'')+'>'+escape(label)+'</option>';
@@ -78,7 +78,7 @@ function side(role) {
   const sprite=s.name===x.forms[0]||s.name.startsWith('Aegislash-')?x.entry.sprite:s.name.toLowerCase().replace(/[’']/g,'');
   node.innerHTML+='<div class="identity">'+(sprite?'<img alt="" src="assets/sprites/'+encodeURIComponent(sprite)+'.png">':'')+'<div><strong>'+escape(s.name)+'</strong><span class="sub">'+escape(data.types.join(' / '))+'</span></div></div>';
   const item=data.stone?'<label>Required Mega Stone<input readonly value="'+escape(data.stone)+'"></label>':picker(role,'item','Held item');
-  const moveList=role==='a'?picker(role,'move','Attacking move',true)+'<small class="wide move-note">'+escape(data.source)+' learnset · '+attacks(s.name).length+' damaging moves</small>':'';
+  const moveList=role==='a'?picker(role,'move','Move',true)+'<small class="wide move-note">'+escape(data.source)+' learnset · '+legalMoves(s.name).length+' league-legal moves</small>':'';
   const conditionalAbilities=['Intimidate','Flash Fire','Electromorphosis','Stakeout','Unburden','Slow Start','Plus','Minus','Wind Power','Intrepid Sword','Dauntless Shield'];
   const abilityOn=conditionalAbilities.includes(s.ability)?'<label class="tick"><input type="checkbox" data-key="abilityOn"'+(s.abilityOn?' checked':'')+'> '+(s.ability==='Intimidate'?'Apply entry Intimidate':'Conditional ability active')+'</label>':'';
   node.innerHTML+='<div class="fields">'+rosterPicker+select('Battle form','form',options(x.forms,s.name))+moveList+
@@ -89,7 +89,7 @@ function side(role) {
     '<label>Import one Showdown set<textarea data-paste rows="4" spellcheck="false" placeholder="Paste a Showdown export"></textarea></label><button type="button" data-import>Load set</button><small data-import-result role="status"></small></details>';
   if(!data.stone)mountPicker($('pick-'+role+'-item'),{key:'item',label:'Held item',values:items,recent:suggestedItems,
     selected:s.item,allowEmpty:true,onSelect:value=>{s.item=value;forecast();}});
-  if(role==='a')mountPicker($('pick-a-move'),{key:'move',label:'Attacking move',values:attacks(s.name),recent:data.suggestions,
+  if(role==='a')mountPicker($('pick-a-move'),{key:'move',label:'Move',values:legalMoves(s.name),maxResults:Infinity,recent:data.suggestions,
     selected:x.move,allowEmpty:false,onSelect:value=>{x.move=value;forecast();}});
   node.querySelector('.set-assumptions').textContent=buildNote(s);
   const image=node.querySelector('img');
@@ -99,6 +99,12 @@ function forecast() {
   const a=activeRole.a,d=activeRole.d;
   try {
     if (!a?.set||!d?.set) throw Error('Select two verified current-roster Pokémon.');
+    const status=statusMove(a.move);
+    if (status) {
+      $('output').innerHTML='<p><strong>'+escape(a.move)+'</strong> · '+escape(status.type)+' · Status</p><p>'+escape(status.effect)+'</p><small>This move has no direct damage roll. To model its effect on a later attack, set the relevant boosts or field conditions.</small>';
+      if ($('compare').open) comparison();
+      return;
+    }
     const r=damage(a.set,d.set,a.move,field);
     $('output').innerHTML='<p>'+escape(a.set.name)+' · '+escape(a.move)+' → '+escape(d.set.name)+'</p><div class="numbers"><div><strong>'+range(r)+'</strong>'+r.low+'–'+r.high+' damage / '+r.hp+' HP</div><div><strong>'+pct(r.ohko)+'</strong>OHKO</div><div><strong>'+pct(r.two)+'</strong>KO within two uses</div></div>'+
       '<div class="hp-track" aria-hidden="true"><i style="width:'+Math.min(100,100*r.high/r.hp)+'%"></i><b style="width:'+Math.min(100,100*r.low/r.hp)+'%"></b></div>'+
@@ -112,6 +118,7 @@ function forecast() {
 function comparison() {
   const a=activeRole.a,d=activeRole.d;
   if (!a?.set||!d){$('comparison').textContent='Choose both coaches and an attacker.';return;}
+  if(statusMove(a.move)){$('comparison').textContent=a.move+' is a status move. Choose a damaging move to compare opponents.';return;}
   const rows=league.coaches[d.coach].roster.map(entry=>{
     const x=slot(d.coach,entry);
     let result,odds='—';
@@ -128,7 +135,7 @@ function edit(role,target) {
   if(k==='entry') activeRole[role]=slot(x.coach,league.coaches[x.coach].roster.find(e=>e.name===value));
   else if(k==='form'){
     const prev=x.set,next=newSet(value);
-    if(!attacks(value).includes(x.move))x.move=firstAttack(value);
+    if(!legalMoves(value).includes(x.move))x.move=firstAttack(value);
     x.set={...prev,name:next.name,item:next.item,ability:next.ability,abilityOn:next.abilityOn};
   }else if(k==='preset'){if (value!=='custom')x.set=applyPreset(x.set,value);else x.set.preset='custom';}
   else if(k==='move')x.move=value;
