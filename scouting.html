@@ -47,6 +47,7 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
 .scout-points li{padding:.85rem;border:1px solid var(--line);border-radius:.55rem;background:#161d34}
 .scout-points li>p{margin-top:.45rem}
 .scout-points strong{color:var(--mint)}
+.scout-points .prep{border-top:1px solid var(--line);margin-top:.75rem;padding-top:.55rem}
 .evidence{font-size:.83rem;margin:.45rem 0 .65rem;overflow-wrap:anywhere}
 .static-selector{position:absolute;width:1px;height:1px;margin:0;opacity:0}
 .static-buttons .jump{cursor:pointer}
@@ -369,7 +370,7 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
   <section class="group pokecenter-section" id="pokecenter"></section>
   </div>
   <footer class="small">
-    <p id="cutoff">Archive through Season 2 Week 4</p>
+    <p id="cutoff">Replay statistics through Season 2 Week 4</p>
     <details><summary>How to read the numbers</summary>
       <p>The six rating bars carry forward the original editorial scores on a 0–100 scale. Confidence describes the available evidence for each rating. The sample filter changes measured habits and game results. Editorial ratings and featured stories use the broader profile.</p>
       <p>A move attempt is an action logged by the replay, including failed attempts. A guard can set up without blocking a hit. “Blocked” counts an attempt at most once even if both slots were protected. Trick Room activations count verified starts. Reversal and expiry are separate effects.</p>
@@ -379,8 +380,10 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
   </footer>
 </main>
 <script src="data/pilot.js"></script>
+<script src="data/scouting-review.js"></script>
 <script>(()=>{
 const archive = window.NPL_DASHBOARD;
+const scoutingReview = window.NPL_SCOUTING_REVIEW;
 const byId = id => document.getElementById(id);
 const coachSelect = byId('coach');
 const scopeSelect = byId('scope');
@@ -466,8 +469,8 @@ const typeBadge = name => '<span class="type-badge type-'+esc(name.toLowerCase()
 function panel(title,body,extra='') { return '<section class="panel '+extra+'"><h2>'+esc(title)+'</h2>'+body+'</section>'; }
 const note = str => '<p class="small">'+esc(str)+'</p>';
 const evidenceLinks = (p, evidence) => evidence.map(e=>{
-  const game=p.games.find(g=>g.replay===e.replay);
-  return urlLink(game.url,e.label);
+  const url=e.url??p.games.find(g=>g.replay===e.replay)?.url;
+  return url ? urlLink(url,e.label) : esc(e.label);
 }).join(' · ');
 const evidenceLine = (p,evidence) => '<p class="evidence">'+evidenceLinks(p,evidence)+'</p>';
 function compact(games) {
@@ -496,11 +499,16 @@ function ratings(p) {
     '/100</b></summary><p class="confidence">'+esc(x.confidence)+' confidence</p><p>'+esc(x.explain)+'</p><p>'+
     x.evidence.map(e=>urlLink(e.url,e.label+' · '+e.scope)).join(' · ')+'</p></details>').join('');
 }
-function scoutingProfile(p) {
-  const scout=p.currentScouting;
-  const observations=scout.points.map(x=>'<li><strong>'+esc(x.title)+'</strong><p>'+esc(x.text)+'</p>'+evidenceLine(p,x.evidence)+'</li>').join('');
+function scoutingProfile(id,p) {
+  const reviewed=scoutingReview?.profiles[id];
+  const scout=reviewed??p.currentScouting;
+  const sample=reviewed
+    ? scoutingReview.through+' · '+scout.games+' games across '+scout.sets+' sets · '+scout.weekFiveGames+' games after the trade window'
+    : 'Season 2 · Weeks 1–4 replay sample';
+  const observations=scout.points.map(x=>'<li><strong>'+esc(x.title)+'</strong><p>'+esc(x.text)+'</p>'+
+    (x.prep?'<p class="prep"><strong>Match prep</strong> '+esc(x.prep)+'</p>':'')+evidenceLine(p,x.evidence)+'</li>').join('');
   return '<div class="grid">'+
-    panel('What to Scout This Season',note('Season 2 · Weeks 1–4 replay sample')+
+    panel('What to Scout This Season',note(sample)+
       '<ol class="scout-points">'+observations+'</ol>','wide')+
     panel('Current Strength and Weakness',
       '<p class="copy"><strong>Strength</strong> '+esc(scout.strength.text)+'</p>'+evidenceLine(p,scout.strength.evidence)+
@@ -770,7 +778,7 @@ function staticPreview() {
         overview(p,games,false,key)+'<section class="group"><h3>Scouting</h3><div class="grid">'+
         adjustments(games,false)+timing(games,false)+usage(games,false)+'</div></section></section>').join('');
       return '<article class="static-coach" id="'+esc(id)+'">'+
-        '<section class="hero coach-header">'+coachHeader(p)+'</section><div class="scouting-profile">'+scoutingProfile(p)+'</div>'+
+        '<section class="hero coach-header">'+coachHeader(p)+'</section><div class="scouting-profile">'+scoutingProfile(id,p)+'</div>'+
         '<div class="static-archive"><div class="archive-filter"><div class="scope-pills" role="group" aria-label="Archive scope">'+scopeLabels+'</div></div>'+
         '<div class="static-samples">'+panels+'</div></div>'+
         '<section class="group" id="'+esc(id)+'-development">'+development(p,false)+
@@ -799,7 +807,7 @@ function coachChange() {
   byId('coach-overview').href='coaches.html?coach='+encodeURIComponent(state.coach)+'#profile';
   for(const btn of coachSelect.querySelectorAll('button'))btn.setAttribute('aria-pressed',String(btn.dataset.coach===state.coach));
   byId('coach-header').innerHTML=coachHeader(p);
-  byId('scouting-profile').innerHTML=scoutingProfile(p);
+  byId('scouting-profile').innerHTML=scoutingProfile(state.coach,p);
   renderDevelopment(p);
   byId('pokecenter').innerHTML=pokecenter(p);
   const options=sampleOptions(p);
@@ -874,7 +882,7 @@ content.addEventListener('change',e=>{
   if(id==='move')byId('move-evidence').open=true;
   byId(id).focus();
 });
-byId('cutoff').innerHTML='Archive through '+esc(archive.cutoff)+' · '+urlLink(archive.sources.manifest,'Match archive');
+byId('cutoff').innerHTML='Replay statistics through '+esc(archive.cutoff)+' · '+urlLink(archive.sources.manifest,'Match archive');
 coachChange();
 byId('interactive').hidden=false;
 byId('static-preview').hidden=true;
