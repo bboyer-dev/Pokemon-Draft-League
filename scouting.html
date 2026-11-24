@@ -364,6 +364,7 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
   <nav aria-label="Coach profile sections" class="tabs" id="nav">
     <button type="button" data-view="overview" aria-pressed="true">Overview</button>
     <button type="button" data-view="scouting" aria-pressed="false">Scouting</button>
+    <a class="jump" id="matchup-lab" href="calculator.html">Matchup Lab</a>
   </nav>
   <div id="content" aria-live="polite"></div>
   <div class="group" id="development"></div>
@@ -816,6 +817,7 @@ function render() {
   const games=p.games.filter(scopes[scope]);
   const competition=scope==='mono'?'mono':scope==='s1all'||(!p.games.some(scopes.s2)&&scope==='overall')?'s1':'s2';
   const coachQuery='?coach='+encodeURIComponent(state.coach)+'&season='+competition;
+  byId('matchup-lab').href='calculator.html'+coachQuery;
   byId('scouting-matches').href='matches.html'+coachQuery;
   byId('coach-overview').href='coaches.html'+coachQuery+'#profile';
   byId('summary').innerHTML=summary(games,scope);

@@ -1,0 +1,59 @@
+import { chromium } from 'playwright-core';
+import assert from 'node:assert/strict';
+const site = new URL('../../',import.meta.url);
+const browser=await chromium.launch({executablePath:process.env.CHROME_PATH || undefined});
+try {
+for(const width of [1366,390]){
+ const ctx=await browser.newContext({viewport:{width,height:850}});
+ const errors=[];
+ const p=await ctx.newPage();p.on('pageerror',e=>errors.push(e.message));
+ const base=site.href;
+ await p.goto(base+'scouting.html?coach=coach_brice&season=s2');
+ await p.locator('#quick-scope [data-scope=s1all]').click();
+ await p.locator('#quick-scope [data-scope=s2]').click();
+ await p.getByRole('button',{name:'Scouting',exact:true}).click();
+ await p.locator('#matchup-lab').click();
+ await p.waitForSelector('#output .numbers');
+ assert.equal(await p.locator('#coach-d').inputValue(),'coach_josh');
+ await p.locator('#coach-d').selectOption('coach_drake');
+ const pick=(r,k)=>p.locator('#side-'+r+' [data-key='+k+']');
+ await pick('a','entry').selectOption('Scizor');
+ await p.locator('#side-a summary').click();
+ await p.locator('#side-a [data-paste]').fill('Arthur (Scizor) (M) @ Life Orb\nAbility: Technician\nLevel: 50\nEVs: 4 HP / 252 Atk / 252 Spe\nAdamant Nature\n- Bullet Punch\n- Protect');
+ await p.locator('#side-a [data-import]').click();
+ assert.equal(await pick('a','ability').inputValue(),'Technician');
+ assert.equal(await pick('a','item').inputValue(),'Life Orb');
+ await p.locator('#side-a [data-paste]').fill('Magikarp\n- Tackle');
+ await p.locator('#side-a [data-import]').click();
+ assert.match(await p.locator('#side-a [data-import-result]').innerText(),/outside/);
+ assert.equal(await pick('a','entry').inputValue(),'Scizor');
+ await pick('a','preset').selectOption('physical');
+ await pick('a','item').fill('Life Orb');
+ await pick('a','move').selectOption('Bullet Punch');
+ await pick('d','entry').selectOption('Mega Floette');
+ await pick('d','preset').selectOption('hp');
+ assert.match(await p.locator('#output').innerText(),/50%/);
+ assert.equal(await p.locator('.rolls span').count(),16);
+ await p.locator('#help').check();
+ assert.match(await p.locator('#output').innerText(),/250–296/);
+ await p.locator('#compare summary').click();
+ await p.locator('#comparison tbody tr').nth(7).waitFor();
+ assert.equal(await p.locator('#comparison tbody tr').count(),8);
+ await p.locator('#comparison button').filter({hasText:'Scream Tail'}).click();
+ assert.equal(await pick('d','entry').inputValue(),'Scream Tail');
+ await p.locator('#swap').click();assert.equal(await p.locator('#coach-a').inputValue(),'coach_drake');
+ const boxes=await Promise.all(['a','d'].map(r=>p.locator('#side-'+r).boundingBox()));
+ assert.equal(Math.round(boxes[0].y)===Math.round(boxes[1].y),width>650);
+ assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+ await p.goto(base+'calculator.html?coach=coach_mason&season=s1');
+ assert.match(await p.locator('#notice').innerText(),/no current/);
+ await p.goto(base+'coaches.html?coach=coach_brice');await p.getByRole('link',{name:'Matchup Lab'}).waitFor();
+ for(const [file,selector] of [['index.html','main a[href*="scouting.html"]'],['matches.html','main a[href*="replay.pokemonshowdown.com"]'],['rules.html','main'],['league-sheet.html','#sheet-standings table']]){
+   await p.goto(base+file);await p.locator(selector).first().waitFor({state:'attached'});
+ }
+ await p.locator('[data-table=mvp]').click();assert.match(await p.locator('#standings-title').innerText(),/MVP/i);
+ await p.goto(base+'matches.html?season=s1&coach=coach_schmitty');assert.equal(await p.locator('#match-season').inputValue(),'s1');
+ assert.deepEqual(errors,[]);console.log(width+'px passed: dashboard navigation, next opponent, controls, rolls, comparison, swap, historical coach, responsive layout and site pages');
+ await ctx.close();
+}
+}finally{await browser.close();}
