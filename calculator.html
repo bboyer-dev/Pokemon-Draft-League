@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101626"><title>Matchup Lab · National Pokémon League</title>
+<link rel="stylesheet" href="assets/site.css"><link rel="stylesheet" href="assets/lab/lab.css">
+<script defer src="data/league.js"></script><script defer src="assets/lab/engine.js"></script><script defer src="assets/lab/forms.js"></script>
+<script defer src="assets/lab/application.js"></script></head>
+<body><nav class="npl-nav" aria-label="Main navigation"><div class="npl-nav-inner"><a class="nav-wordmark" href="index.html"><span class="nav-ball" aria-hidden="true"></span>NPL</a>
+<div class="nav-links"><a href="index.html">Home</a><a href="coaches.html">Coaches</a><a href="calculator.html" aria-current="page">Matchup Lab</a><a href="matches.html">Matches</a><a href="rules.html">Rules</a><a href="league-sheet.html">League Sheet</a></div></div></nav>
+<header class="page-intro page-intro--lab"><div class="hero-inner"><p class="eyebrow">National Pokémon League · Season 2</p><h1>Matchup Lab</h1><p>Level 50 doubles damage calculator</p></div></header>
+<main class="site-main" id="lab"><a id="back" href="scouting.html">← Coach scouting dashboard</a>
+<p id="notice" role="status">Loading Matchup Lab… If this message persists, open the page from the complete extracted site folder with JavaScript enabled.</p>
+<section class="coach-bar" aria-label="Matchup selection"><label>Attacking coach<select id="coach-a"></select></label><button id="swap" type="button">⇄ Swap sides</button><label>Defending coach<select id="coach-d"></select></label></section>
+<div class="sides"><section class="side attacker" id="side-a" aria-label="Attacker settings"></section><section class="side defender" id="side-d" aria-label="Defender settings"></section></div>
+<section class="lab-panel"><h2>Battlefield</h2><div class="weather"><label>Weather<select id="weather"><option value="">Clear</option><option>Sun</option><option>Rain</option><option>Sand</option><option>Snow</option></select></label><label>Terrain<select id="terrain"><option value="">None</option><option>Electric</option><option>Grassy</option><option>Misty</option><option>Psychic</option></select></label></div>
+<div id="conditions" class="checks"></div><small>Set the weather and terrain currently in effect, including effects started by abilities. Friend Guard represents the defender’s ally.</small></section>
+<section class="lab-panel readout" aria-labelledby="result-title"><h2 id="result-title">Damage forecast</h2><div id="output" aria-live="polite"></div></section>
+<details class="lab-panel" id="compare"><summary>Compare Against Entire Roster</summary><p>Each slot keeps its own defensive build for this session. Unedited slots use full HP, zero EVs, 31 IVs, a neutral nature and the first listed ability. Drafted Megas start Mega Evolved.</p><div id="comparison"></div></details>
+<aside class="showdown-link" aria-label="More calculator options"><p>Missing a specific use case? Try the more comprehensive Pokémon Showdown damage calculator.</p><a class="button" href="https://calc.pokemonshowdown.com/" target="_blank" rel="noopener noreferrer">Open Showdown calculator ↗</a></aside>
+</main><footer class="site-footer"><span>National Pokémon League</span><a href="assets/lab/licenses.txt">Engine &amp; data credits</a></footer></body></html>

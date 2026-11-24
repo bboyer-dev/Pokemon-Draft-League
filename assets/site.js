@@ -134,6 +134,8 @@ function coachDirectory() {
   }
   function show() {
     const coach=league.coaches[selected];
+    const labLink=byId('nav-lab');
+    if(labLink) labLink.href='calculator.html?coach='+encodeURIComponent(selected)+'&season='+encodeURIComponent(season);
     const active=season==='s2';
     const record=active?currentRecord(selected):league.historical[season][selected];
     const roster=active?coach.roster:record.roster;
@@ -144,7 +146,7 @@ function coachDirectory() {
       '<div class="profile-record"><span>'+esc(record.label??'Season 2 record')+'</span><strong>'+esc(record.record)+'</strong></div></header>'+
       '<div class="button-row profile-links">'+(coach.dashboard?'<a class="button primary" href="'+scoutingLink(selected,season)+'">Open scouting dashboard</a>':'')+
       '<a class="button" href="matches.html?coach='+encodeURIComponent(selected)+'&season='+season+'">Match history</a>'+
-      (active?external(coach.sheet,'Official coach sheet'):'')+'</div><p class="data-note">'+esc(sample)+'</p>'+
+      (active?'<a class="button" href="calculator.html?coach='+encodeURIComponent(selected)+'">Matchup Lab</a>'+external(coach.sheet,'Official coach sheet'):'')+'</div><p class="data-note">'+esc(sample)+'</p>'+
       (active?'<div class="panel"><h3>Next matchup</h3>'+matchup(nextFor(selected),selected)+'</div>':'')+
       '<div class="panel"><h3>'+(active?'Present roster':'Archived Pokémon')+'</h3><ul class="roster-list">'+roster.map(mon=>'<li>'+
         sprite(mon,38)+
