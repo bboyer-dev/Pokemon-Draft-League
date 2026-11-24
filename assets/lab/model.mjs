@@ -16,6 +16,18 @@ export const presets = {
 const table = (values) => Object.fromEntries(stats.map((s,i)=>[s,values[i]]));
 export const items = [...gen.items].filter(i=>!catalog.excludedItems.includes(i.id)).map(i=>i.name).sort();
 export const moves = [...gen.moves].filter(m=>m.category !== 'Status' && !m.isZ && !m.isMax && m.name!=='(No Move)').map(m=>m.name).sort();
+const damagingByID=new Map(moves.map(m=>[id(m),m]));
+export function legalMoves(name) {
+  return catalog.pools[form(name).pool].map(i=>catalog.moveNames[i]);
+}
+export function attacks(name) {
+  return legalMoves(name).map(m=>damagingByID.get(id(m))).filter(Boolean);
+}
+const statAbbr={atk:'Atk',def:'Def',spa:'SpA',spd:'SpD',spe:'Spe'};
+export function natureLabel(name) {
+  const {minus,plus}=gen.natures.get(id(name));
+  return name+' ('+(minus===plus?'neutral':'−'+statAbbr[minus]+' / +'+statAbbr[plus])+')';
+}
 export const natures = [...gen.natures].map(n=>n.name).sort();
 export function form(name) {
   const species = gen.species.get(id(name));
@@ -71,7 +83,7 @@ class SingleTargetExpandingForce extends calc.Move {
 export function damage(a,d,moveName,settings=defaultField) {
   validate(a); validate(d);
   const f={...defaultField,...settings};
-  if (!moves.includes(moveName)) throw Error('Choose a damaging move from the list.');
+  if (!attacks(a.name).includes(moveName)) throw Error('Choose a damaging move from '+a.name+'’s '+form(a.name).source+' learnset.');
   if (conditionalMoves.has(moveName)) throw Error(moveName+' requires battle history, a target action or an effect outside this lab.');
   if (['Disguise','Ice Face'].includes(d.ability)) throw Error('This lab cannot resolve '+d.ability+' interception.');
   if (a.name==='Aegislash-Shield') throw Error('Choose Blade Forme for an attacking Aegislash. Stance Change occurs before it deals damage.');

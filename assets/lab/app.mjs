@@ -1,10 +1,19 @@
+import {mountPicker} from './picker.mjs';
 import {importSet} from './import.mjs';
-import {damage,defaultField,draftedForms,form,gen,items,moves,natures,newSet,nextOpponent,presets,stats,applyPreset} from './model.mjs';
+import {damage,defaultField,draftedForms,form,items,attacks,natureLabel,natures,newSet,nextOpponent,presets,stats,applyPreset} from './model.mjs';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const opt=(value,label,selected)=>'<option value="'+escape(value)+'"'+(value===selected?' selected':'')+'>'+escape(label)+'</option>';
 const options=(values,current)=>values.map(v=>opt(v,v,current)).join('');
 const select=(label,key,content,wide=false)=>'<label'+(wide?' class="wide"':'')+'>'+label+'<select data-key="'+key+'">'+content+'</select></label>';
+function picker(role,key,label,wide=false) {
+  const p='pick-'+role+'-'+key;
+  return '<div class="lab-picker'+(wide?' wide':'')+'" id="'+p+'"><label>'+label+
+    '<input role="combobox" aria-autocomplete="list" aria-expanded="false" autocomplete="off" aria-describedby="'+p+'-status"></label>'+
+    '<ul role="listbox" hidden></ul><small role="status" id="'+p+'-status"></small></div>';
+}
+const suggestedItems=['Life Orb','Focus Sash','Choice Scarf','Sitrus Berry','Assault Vest','Leftovers'];
+function firstAttack(name){return form(name).suggestions[0]||attacks(name)[0]||'';}
 const field={...defaultField};
 const labels={help:'Helping Hand',reflect:'Reflect',light:'Light Screen',guard:'Friend Guard',burn:'Attacker burned',spread:'Multiple targets in range',crit:'Critical hit'};
 const statLabels={hp:'HP',atk:'Atk',def:'Def',spa:'Sp. Atk',spd:'Sp. Def',spe:'Speed'};
@@ -24,7 +33,7 @@ function slot(coach,entry) {
     try {
       const forms=draftedForms(entry.name);
       const set=newSet(forms[0]);
-      builds.set(key,{coach,entry,forms,set,move:form(set.name).suggestions[0]||''});
+      builds.set(key,{coach,entry,forms,set,move:firstAttack(set.name)});
     } catch(error) { builds.set(key,{coach,entry,error:error.message}); }
   }
   return builds.get(key);
@@ -46,7 +55,7 @@ function coachControls() {
 function buildNote(set) {
   const evs=stats.filter(s=>set.evs[s]).map(s=>set.evs[s]+' '+statLabels[s]).join(' / ')||'0 EVs';
   const ivs=stats.every(s=>set.ivs[s]===31)?'31 IVs in all stats':stats.map(s=>set.ivs[s]+' '+statLabels[s]).join(' / ')+' IVs';
-  return set.nature+' · '+evs+' · '+ivs;
+  return natureLabel(set.nature)+' · '+evs+' · '+ivs;
 }
 function stages(set,s) {
   return Array.from({length:13},(_,i)=>opt(i-6,(i>6?'+':'')+(i-6),set.boosts[s])).join('');
@@ -68,17 +77,20 @@ function side(role) {
   const s=x.set, data=form(s.name);
   const sprite=s.name===x.forms[0]||s.name.startsWith('Aegislash-')?x.entry.sprite:s.name.toLowerCase().replace(/[’']/g,'');
   node.innerHTML+='<div class="identity">'+(sprite?'<img alt="" src="assets/sprites/'+encodeURIComponent(sprite)+'.png">':'')+'<div><strong>'+escape(s.name)+'</strong><span class="sub">'+escape(data.types.join(' / '))+'</span></div></div>';
-  const item=data.stone?'<label>Required Mega Stone<input readonly value="'+escape(data.stone)+'"></label>':'<label>Held item<input list="lab-items" data-key="item" placeholder="No item" value="'+escape(s.item)+'"></label>';
-  const suggestions=data.suggestions;
-  const moveList=role==='a'?select('Attacking move','move',opt('','Choose a move',x.move)+(suggestions.length?'<optgroup label="Suggested moves">'+options(suggestions,x.move)+'</optgroup>':'')+'<optgroup label="All damaging moves">'+options(moves.filter(m=>!suggestions.includes(m)),x.move)+'</optgroup>',true)+'<small class="wide move-note">The full move list supports hypothetical sets. Check move legality before importing a team into Showdown.</small>':'';
+  const item=data.stone?'<label>Required Mega Stone<input readonly value="'+escape(data.stone)+'"></label>':picker(role,'item','Held item');
+  const moveList=role==='a'?picker(role,'move','Attacking move',true)+'<small class="wide move-note">'+escape(data.source)+' learnset · '+attacks(s.name).length+' damaging moves</small>':'';
   const conditionalAbilities=['Intimidate','Flash Fire','Electromorphosis','Stakeout','Unburden','Slow Start','Plus','Minus','Wind Power','Intrepid Sword','Dauntless Shield'];
   const abilityOn=conditionalAbilities.includes(s.ability)?'<label class="tick"><input type="checkbox" data-key="abilityOn"'+(s.abilityOn?' checked':'')+'> '+(s.ability==='Intimidate'?'Apply entry Intimidate':'Conditional ability active')+'</label>':'';
   node.innerHTML+='<div class="fields">'+rosterPicker+select('Battle form','form',options(x.forms,s.name))+moveList+
     select('Ability','ability',options(data.abilities,s.ability))+item+
     select('EV preset','preset',opt('custom','Custom',s.preset)+Object.entries(presets).map(([k,v])=>opt(k,v[0],s.preset)).join(''))+
-    select('Nature','nature',options(natures,s.nature))+'</div><p class="set-assumptions"></p>'+abilityOn+
+    select('Nature','nature',natures.map(n=>opt(n,natureLabel(n),s.nature)).join(''))+'</div><p class="set-assumptions"></p>'+abilityOn+
     '<details'+(expanded?' open':'')+'><summary>Advanced stats &amp; boosts</summary>'+advanced(title,s)+
     '<label>Import one Showdown set<textarea data-paste rows="4" spellcheck="false" placeholder="Paste a Showdown export"></textarea></label><button type="button" data-import>Load set</button><small data-import-result role="status"></small></details>';
+  if(!data.stone)mountPicker($('pick-'+role+'-item'),{key:'item',label:'Held item',values:items,recent:suggestedItems,
+    selected:s.item,allowEmpty:true,onSelect:value=>{s.item=value;forecast();}});
+  if(role==='a')mountPicker($('pick-a-move'),{key:'move',label:'Attacking move',values:attacks(s.name),recent:data.suggestions,
+    selected:x.move,allowEmpty:false,onSelect:value=>{x.move=value;forecast();}});
   node.querySelector('.set-assumptions').textContent=buildNote(s);
   const image=node.querySelector('img');
   if (image) image.onerror=()=>{image.onerror=null;image.src='assets/sprites/'+encodeURIComponent(x.entry.sprite)+'.png';image.alt='Drafted roster slot';};
@@ -116,6 +128,7 @@ function edit(role,target) {
   if(k==='entry') activeRole[role]=slot(x.coach,league.coaches[x.coach].roster.find(e=>e.name===value));
   else if(k==='form'){
     const prev=x.set,next=newSet(value);
+    if(!attacks(value).includes(x.move))x.move=firstAttack(value);
     x.set={...prev,name:next.name,item:next.item,ability:next.ability,abilityOn:next.abilityOn};
   }else if(k==='preset'){if (value!=='custom')x.set=applyPreset(x.set,value);else x.set.preset='custom';}
   else if(k==='move')x.move=value;
@@ -141,7 +154,6 @@ function init() {
   if (!a || requested && !d) $('notice').textContent='This coach or opponent has no current Season 2 roster. Choose an active coach below.';
   else if (!d) $('notice').textContent='No upcoming opponent is scheduled. Choose a defending coach.';
   changeCoach('a',a);changeCoach('d',d);
-  document.body.insertAdjacentHTML('beforeend','<datalist id="lab-items">'+options(items,'')+'</datalist>');
   $('conditions').innerHTML=Object.entries(labels).map(([k,label])=>'<label class="tick"><input type="checkbox" id="'+k+'"'+(field[k]?' checked':'')+'> '+label+'</label>').join('');
   for(const role of ['a','d']){
     $('coach-'+role).onchange=e=>{
@@ -159,7 +171,7 @@ function init() {
         side(role);forecast();panel.querySelector('[data-import-result]').textContent=imported.note;
       }catch(error){panel.querySelector('[data-import-result]').textContent=error.message;}
     });
-    $('side-'+role).addEventListener('input',e=>{if(e.target.tagName==='INPUT' && e.target.type!=='checkbox')edit(role,e.target);});
+    $('side-'+role).addEventListener('input',e=>{if(e.target.type==='number')edit(role,e.target);});
     $('side-'+role).addEventListener('change',e=>{if(e.target.tagName==='SELECT'||e.target.type==='checkbox')edit(role,e.target);});
   }
   $('swap').onclick=()=>{[activeRole.a,activeRole.d]=[activeRole.d,activeRole.a];refresh();};

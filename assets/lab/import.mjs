@@ -1,5 +1,5 @@
 import {Sets} from '@pkmn/sets';
-import {draftedForms,gen,moves,newSet,validate} from './model.mjs';
+import {draftedForms,gen,legalMoves,attacks,newSet,validate} from './model.mjs';
 const id=window.NPLCalc.toID;
 // Accept a single standard export. Validate before touching the session's selected build.
 export function importSet(text, roster) {
@@ -40,13 +40,15 @@ export function importSet(text, roster) {
   if (set.gender && speciesGender && set.gender!==speciesGender) throw Error('The exported gender conflicts with the selected form.');
   set.preset='custom';
   validate(set);
-  const moveNames=(parsed.moves||[]).map(m=>{
-    const move=gen.moves.get(id(m.replace(/[\[\]]/g,'')));
-    if(!move||move.isZ||move.isMax)throw Error('Unrecognized or unsupported imported move: '+m);
-    return move.name;
+  const pool=legalMoves(name);
+  const moveNames=(parsed.moves||[]).map(raw=>{
+    const move=pool.find(m=>id(m)===id(raw));
+    if(!move)throw Error(raw+' is outside '+name+'’s league learnset.');
+    return move;
   });
   if(moveNames.length>4)throw Error('A set may contain at most four moves.');
-  const move=moveNames.find(m=>moves.includes(m))||'';
+  const damaging=attacks(name);
+  const move=moveNames.map(m=>damaging.find(v=>id(v)===id(m))).find(Boolean)||'';
   let note='Loaded '+name+' at level 50.';
   if(parsed.teraType)note+=' League rules ignore the exported Tera Type.';
   if(!parsed.ability)note+=' Assumed '+set.ability+'.';

@@ -123,7 +123,7 @@ test('Bad forms, missing data, illegal inputs, survival effects and unsupported 
   for(const move of ['Protect','Max Flare','Fissure','Rage Fist'])assert.throws(()=>lab.damage(a,d,move));
   const sash=lab.damage(a,{...lab.newSet('Scream Tail'),item:'Focus Sash'},'Bullet Punch');assert.equal(sash.ohko,null);
   const multi=lab.damage(lab.newSet('Maushold'),d,'Population Bomb');assert.equal(multi.ohko,null);assert.ok(multi.high>=multi.low);
-  assert.equal(lab.damage(a,d,'Seismic Toss').low,50);
+  assert.equal(lab.damage(lab.newSet('Machamp'),d,'Seismic Toss').low,50);
   const psychic=lab.newSet('Armarouge'),target=lab.newSet('Scizor');
   check(psychic,target,'Expanding Force',{terrain:'Psychic',spread:true});
   const single=lab.damage(psychic,target,'Expanding Force',{terrain:'Psychic',spread:false,light:true});
@@ -138,4 +138,31 @@ test('Showdown imports validate before replacing the selected set',async()=>{
   assert.equal(set.ivs.spa,0);assert.equal(set.ivs.atk,31);assert.equal(set.gender,'M');assert.equal(move,'Bullet Punch');assert.match(note,/ignore/);
   for(const bad of ['Unknownmon','Scizor\nLevel: 100','Scizor\nLevel: 50abc','Scizor\nEVs: 800 HP','Scizor\nEVs: 4 HP / 4 HP',
     'Scizor\n- Bad move','Gyarados-Mega @ Life Orb','Scizor\n\nFoongus','Scizor\nAbility: Levitate'])assert.throws(()=>importSet(bad,roster));
+});
+
+test('Game-specific learnsets, fallback titles, shared bans and nature labels',async()=>{
+  const {importSet}=await import('../../assets/lab/import.mjs');
+  const reference=[
+    ['Scizor','Champions','Psycho Cut'],['Scream Tail','Scarlet / Violet','Dazzling Gleam'],
+    ['Dracovish','Sword / Shield','Fishious Rend'],['Ferrothorn','Sword / Shield','Leech Seed'],
+    ['Tapu Lele','Sword / Shield',"Nature's Madness"],['Marowak-Alola','Legends: Z-A','Shadow Bone'],
+    ['Shedinja','Brilliant Diamond / Shining Pearl','Shadow Sneak'],['Shuckle','Brilliant Diamond / Shining Pearl','Power Trick'],
+    ['Rattata','Brilliant Diamond / Shining Pearl','Quick Attack']
+  ];
+  for(const [n,source,move] of reference){
+    assert.equal(lab.form(n).source,source);assert(lab.legalMoves(n).includes(move),n+' '+move);
+  }
+  const roster=window.NPL_LEAGUE.coaches.coach_brice.roster;
+  assert(!lab.attacks('Scizor').includes('False Swipe'));
+  for(const move of ['Hidden Power [Ice]','Hidden Power','Return','Frustration','False Swipe','Spore'])
+    assert.throws(()=>importSet('Scizor\n- '+move,roster),/learnset/);
+  for(const coach of Object.values(window.NPL_LEAGUE.coaches))for(const mon of coach.roster||[])
+    for(const f of lab.draftedForms(mon.name)){
+      assert(lab.attacks(f).length>0,f);
+      assert(!lab.legalMoves(f).some(m=>/^(Hidden Power|Frustration$|Return$)/.test(m)));
+      assert(lab.form(f).suggestions.every(m=>lab.attacks(f).includes(m)));
+    }
+  assert.equal(lab.natureLabel('Quiet'),'Quiet (−Spe / +SpA)');
+  assert.equal(lab.natureLabel('Hardy'),'Hardy (neutral)');
+  assert.equal(lab.natures.filter(n=>lab.natureLabel(n).includes('neutral')).length,5);
 });

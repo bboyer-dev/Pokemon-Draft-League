@@ -14,11 +14,11 @@ The site’s weekly refresh writes the current rosters and schedule to `window.N
 - OHKO odds count full-HP knockouts across the engine’s equally likely rolls. “KO within two uses” includes first-use KOs and counts all independent roll pairs under fixed conditions. Accuracy, end-of-turn effects, recovery and random secondary effects are excluded. Variable multi-hit moves use the engine’s assumed hit count. KO odds are withheld for multi-hit distributions, survival items/abilities or recognized changes between uses as appropriate. The simplified lab starts both Pokémon at full health.
 - For a spread move with only one target left, doubles screen rules still apply. Expanding Force can change its target inside the engine. The adapter preserves its terrain boost while representing a single remaining target, with all rolls checked against the independent Showdown simulator.
 - Paste one standard Showdown set under Advanced on either side. Nicknames, item, ability, gender, IVs, EVs, nature and the first damaging move load together. Explicitly supplied levels must equal 50. An invalid/off-roster import leaves the prior build intact. The league ignores an exported Tera Type.
-- The full move menu supports hypothetical matchups and does not enforce learnset or team legality. Conditional moves that require unrepresented history or a target action report their limitation. Historical rosters, full-team imports, individual loan imports and an 8×8 matrix are deferred.
+- The move picker and Showdown import use the selected form’s Pokémon Champions learnset when available, then its Scarlet / Violet learnset. For a species absent from both, use its last available game’s native learnset. Search a legal damaging move or a held item by typing part of its name. Both pickers show up to eight matches. Each nature displays its lowered and raised stats. Hidden Power (all types), Return, Frustration, the league’s OHKO bans, Baton Pass and evasion-boosting Double Team and Minimize are excluded. Conditional moves that require unrepresented history or a target action report their limitation. Historical rosters, full-team imports, individual loan imports and an 8×8 matrix are deferred.
 
 ## Build and verify
 
-From the repository root, use Node 22 or later.
+From the repository root, use Node 22 or later and Python 3. Showdown @pkmn/mods supplies Champions version 0.11.0. The build reads checksum-pinned PokéAPI native acquisition tables for species missing from both Champions and Scarlet / Violet. The first build downloads the CSVs. Subsequent builds use a local cache. Set `NPL_POKEAPI_DIR` to a preloaded directory for an offline build. Visitors use the checked-in assets.
 
 ```sh
 npm ci
@@ -37,9 +37,9 @@ The mechanics suite loads the shipped browser engine, compares its rolls with th
 | Path | Purpose |
 |---|---|
 | `calculator.html` | Static calculator page |
-| `assets/lab/app.mjs`, `model.mjs`, `import.mjs`, `lab.css` | Interface, mechanics adapter and styling |
+| `assets/lab/app.mjs`, `model.mjs`, `import.mjs`, `picker.mjs`, `lab.css` | Interface, mechanics adapter and styling |
 | `assets/lab/application.js`, `engine.js`, `forms.js` | Generated browser bundles and verified dex metadata |
 | `assets/lab/licenses.txt` | Calculator, dex and Showdown notices |
 | `assets/site.js`, `scouting.html` | Coach profile and scouting navigation |
-| `tools/lab/build.cjs`, `test.cjs`, `browser-test.mjs` | Reproducible build, reference calculations and browser checks |
+| `tools/lab/build.cjs`, `native-pools.py`, `test.cjs`, `browser-test.mjs` | Reproducible build, reference calculations and browser checks |
 | `package.json`, `package-lock.json`, `.gitignore` | Pinned development dependencies and local install exclusion |
