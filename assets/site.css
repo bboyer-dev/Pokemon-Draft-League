@@ -31,14 +31,23 @@ h3{font-size:1.15rem;line-height:1.2;margin-bottom:.55rem}
 .match-meta,.section-foot{display:flex;justify-content:space-between;gap:.4rem .7rem;flex-wrap:wrap}
 .match-meta,.data-note,.section-foot,.subtle{font-size:.81rem;color:var(--muted)}
 .match-core{display:grid;grid-template-columns:1fr auto 1fr;gap:.35rem;align-items:center;min-height:3.35rem}
-.match-core a{color:var(--text);text-decoration:none;font-weight:670;overflow-wrap:anywhere}
-.match-core a:last-child{text-align:right}
-.match-core a.winner{color:var(--mint)}
+.match-coach{display:grid;justify-items:start;min-width:0;gap:.06rem}
+.match-coach:last-child{justify-items:end;text-align:right}
+.match-core .coach-name{color:var(--text);text-decoration:none;font-weight:670;overflow-wrap:anywhere}
+.match-core .coach-name.winner{color:var(--mint)}
+.scout-link{font-size:.75rem;line-height:1.2}
 .match-core strong{font-size:1.14rem;min-width:2.4rem;text-align:center;font-variant-numeric:tabular-nums}
 .match-bottom{min-height:1.85rem;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;font-size:.8rem}
-.replay-link{border:1px solid #536a7b;background:#1b3441;color:var(--mint);border-radius:.32rem;padding:.12rem .35rem;text-decoration:none}
+.replay-link{border:1px solid #536a7b;background:#283349;color:#e1e9fd;border-radius:.32rem;padding:.12rem .35rem;text-decoration:none}
+.replay-link.replay-win{border-color:#4b897a;background:#1a3838;color:#b2f3da}
+.replay-link.replay-loss{border-color:#a05a67;background:#472937;color:#ffc1c7}
+.replay-legend{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:.45rem 0 .1rem;color:var(--muted);font-size:.81rem}
+.replay-legend .replay-loss{margin-left:.5rem}
 .section-foot{margin-top:.75rem}
 .home-bottom{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.75rem}
+.home-bottom .team-standings-panel{grid-column:1/-1}
+.home-bottom>div:last-child{grid-column:1/-1}
+.week-picker{display:grid;gap:.15rem}
 .panel{padding:1rem 1.15rem}
 .panel h2,.panel p{margin-bottom:.55rem}
 .table-wrap{overflow:auto}
@@ -64,6 +73,21 @@ select{font:inherit;color:var(--text);background:var(--panel);border:1px solid v
 .roster-list strong,.roster-list li>div>span{display:block}
 .roster-list strong{overflow-wrap:anywhere}
 .roster-sprite{display:block;object-fit:contain;image-rendering:pixelated}
+.mvp-pokemon{display:inline-flex;align-items:center;gap:.4rem}
+.mvp-pokemon img{flex:none}
+.trio-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}
+.trio-card{min-width:0;padding:.75rem;border:1px solid var(--line);border-radius:.55rem;background:var(--bg)}
+.trio-card header{display:flex;justify-content:space-between;gap:.5rem;align-items:baseline;margin-bottom:.6rem}
+.trio-card h3{font-size:.94rem}
+.trio-card h3 span,.trio-card header strong{color:var(--mint)}
+.trio-card header strong{font-size:.84rem;white-space:nowrap}
+.trio-posters{list-style:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem;padding:0;margin:0}
+.trio-posters a{display:grid;gap:.22rem;text-align:center;align-content:start;color:var(--text);font-size:.79rem}
+.trio-posters img{display:block;width:100%;height:clamp(80px,14vw,126px);object-fit:contain;background:#192239;border-radius:.25rem}
+.trio-weeks{display:flex;flex-wrap:wrap;gap:.4rem .8rem;font-size:.76rem;margin:.7rem 0 0}
+.trio-weeks dt{color:var(--muted)}
+.trio-weeks dd{margin:0}
+.competition-switch{margin:.8rem 0 .75rem}
 .type{display:inline-block;padding:.03rem .25rem;border-radius:.2rem;background:var(--type-color);color:white;font-size:.68rem;font-weight:650;line-height:1.25}
 .filterbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-bottom:.7rem}
 .filterbar select{display:block;width:100%;margin-top:.15rem}
@@ -84,7 +108,7 @@ select{font:inherit;color:var(--text);background:var(--panel);border:1px solid v
 @media(max-width:550px){
   .site-hero{background-image:linear-gradient(90deg,#0d1428 0%,#0d1428bd 72%,#0d14285e),url('npl-art.webp');background-position:center,right -2.4rem center;background-size:100% 100%,auto 102%}
   .hero-inner{padding-block:2.3rem}
-  .home-bottom,.match-grid{grid-template-columns:1fr}
+  .home-bottom,.match-grid,.trio-grid{grid-template-columns:1fr}
   .filterbar{grid-template-columns:1fr 1fr}
   .filterbar label:last-child{grid-column:1/-1}
   .rules-summary{grid-template-columns:1fr}

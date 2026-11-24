@@ -5,10 +5,12 @@
 
 <header class="site-hero"><div class="hero-inner"><p class="eyebrow">NPL · Season 2</p><h1>National<br>Pokémon League</h1><p class="hero-subtitle">Draft League</p><div class="button-row"><a class="button primary" href="#schedule">See matchups</a><a class="button" href="coaches.html">Coach dashboards</a></div></div></header>
 <main class="site-main">
-<section class="section-top" id="schedule"><div class="section-head"><div><p class="eyebrow">Regular season</p><h2 id="home-week">League matchups</h2></div><div class="button-row" id="week-switch" role="group" aria-label="Schedule week"></div></div>
+<section class="section-top" id="schedule"><div class="section-head"><div><p class="eyebrow">Regular season</p><h2 id="home-week">League matchups</h2></div><label class="week-picker" for="week-switch">Schedule week<select id="week-switch"></select></label></div>
 <div class="match-grid" id="home-matches" aria-live="polite"></div>
 <div class="section-foot"><p id="score-status"></p><a href="matches.html">Browse the match archive <span aria-hidden="true">↗</span></a></div></section>
-<section class="home-bottom"><div class="panel"><div class="section-head"><h2>Standings</h2><a href="league-sheet.html">Full table <span aria-hidden="true">↗</span></a></div><div id="home-standings"></div></div>
+<section class="home-bottom"><div class="panel"><div class="section-head"><h2>Coach standings</h2><a href="league-sheet.html">Full table <span aria-hidden="true">↗</span></a></div><div id="home-standings"></div></div>
+<div class="panel"><div class="section-head"><h2>MVP race</h2><a href="league-sheet.html?standings=mvp">Full table <span aria-hidden="true">↗</span></a></div><div id="home-mvp"></div></div>
+<div class="panel team-standings-panel"><div class="section-head"><h2>Team standings</h2><a href="league-sheet.html?standings=team">Full table <span aria-hidden="true">↗</span></a></div><div id="home-teams"></div></div>
 <div class="panel"><h2>Find your next opponent</h2><form id="opponent-form"><label for="your-coach">Your coach</label><div class="button-row"><select id="your-coach" required></select><button type="submit" class="button primary">Find matchup</button></div></form><div id="opponent-result" aria-live="polite"></div></div></section>
 </main>
 <footer class="site-footer"><span>National Pokémon League</span><a href="league-sheet.html">League sources</a></footer>

@@ -48,6 +48,7 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
 .scout-points li>p{margin-top:.45rem}
 .scout-points strong{color:var(--mint)}
 .scout-points .prep{border-top:1px solid var(--line);margin-top:.75rem;padding-top:.55rem}
+.rival-heading{margin-top:.85rem;padding-top:.6rem;border-top:1px solid var(--line)}
 .evidence{font-size:.83rem;margin:.45rem 0 .65rem;overflow-wrap:anywhere}
 .static-selector{position:absolute;width:1px;height:1px;margin:0;opacity:0}
 .static-buttons .jump{cursor:pointer}
@@ -358,7 +359,6 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
   <div id="scouting-profile"></div>
   <div class="archive-filter">
     <div id="quick-scope"></div>
-    <label>More replay samples<select id="scope"></select></label>
   </div>
   <section class="hero" id="summary" aria-label="Played results" aria-live="polite"></section>
   <nav aria-label="Coach profile sections" class="tabs" id="nav">
@@ -370,7 +370,7 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
   <section class="group pokecenter-section" id="pokecenter"></section>
   </div>
   <footer class="small">
-    <p id="cutoff">Replay statistics through Season 2 Week 4</p>
+    <p id="cutoff">Replay statistics through Season 2 Week 5</p>
     <details><summary>How to read the numbers</summary>
       <p>The six rating bars carry forward the original editorial scores on a 0–100 scale. Confidence describes the available evidence for each rating. The sample filter changes measured habits and game results. Editorial ratings and featured stories use the broader profile.</p>
       <p>A move attempt is an action logged by the replay, including failed attempts. A guard can set up without blocking a hit. “Blocked” counts an attempt at most once even if both slots were protected. Trick Room activations count verified starts. Reversal and expiry are separate effects.</p>
@@ -381,13 +381,29 @@ footer{border-top:1px solid var(--line);margin-top:1rem;padding-top:.7rem}
 </main>
 <script src="data/pilot.js"></script>
 <script src="data/scouting-review.js"></script>
+<script src="data/replay-update.js"></script>
 <script>(()=>{
 const archive = window.NPL_DASHBOARD;
 const scoutingReview = window.NPL_SCOUTING_REVIEW;
+const update = window.NPL_REPLAY_UPDATE;
+if (update) {
+  const latestByID = Object.entries(update.additions);
+  for (const [id, addition] of latestByID) {
+    const profile=archive.coaches[id];
+    profile.games.push(...addition.games);
+    profile.teamCatalog.s2=addition.roster;
+    profile.dossier.signature_entries=addition.signature;
+  }
+  Object.assign(archive.coaches,update.historical);
+  Object.assign(archive.spriteByName,update.sprites);
+  archive.spriteIds=update.spriteIds;
+  archive.cutoff=update.cutoff;
+  archive.archive_revision=update.reviewedThrough;
+}
 const byId = id => document.getElementById(id);
 const coachSelect = byId('coach');
-const scopeSelect = byId('scope');
 const nav = byId('nav');
+const latestWeek = Math.max(...Object.values(archive.coaches).flatMap(p=>p.games.filter(g=>g.season==='S2 regular').map(g=>g.week)));
 const labels = {
   overall: 'Overall · all archived competitions',
   s1all: 'Season 1 · regular and playoffs',
@@ -395,9 +411,9 @@ const labels = {
   s1: 'Season 1 regular',
   s1w4: 'Season 1 Weeks 1–4',
   s1late: 'Season 1 Weeks 5–7',
-  s2: 'Season 2 Weeks 1–4',
+  s2: 'Season 2 Weeks 1–'+latestWeek,
   early: 'Season 2 Weeks 1–2',
-  later: 'Season 2 Weeks 3–4',
+  later: 'Season 2 Weeks 3–'+latestWeek,
   playoffs: 'Season 1 playoffs',
   mono: 'September Monotype'
 };
@@ -418,7 +434,9 @@ const moveNames = ['Protect', 'Wide Guard', "King’s Shield", 'Reflect', 'Light
 const guards = new Set(['Protect','Detect','Spiky Shield','Baneful Bunker',"King's Shield",'Obstruct','Silk Trap','Burning Bulwark','Wide Guard','Quick Guard','Mat Block']);
 const speed = new Set(['Tailwind','Trick Room','Icy Wind','Electroweb','Thunder Wave','String Shot','Scary Face','Bulldoze','Quash','After You','Speed Swap']);
 const setup = new Set(['Tailwind', 'Trick Room', 'Reflect', 'Light Screen', 'Wide Guard', 'Protect', "King's Shield"]);
-const state = { coach: Object.keys(archive.coaches).find(id=>id===new URLSearchParams(location.search).get('coach')) ?? Object.keys(archive.coaches)[0], view: 'overview', move: 'Protect', type: 'Any type', opponent: 'Any opponent', start: 'All sets' };
+const parameters = new URLSearchParams(location.search);
+const requestedScope = {s1:'s1all',s2:'s2',mono:'mono'}[parameters.get('season')];
+const state = { coach: Object.keys(archive.coaches).find(id=>id===parameters.get('coach')) ?? Object.keys(archive.coaches)[0], scope: requestedScope??'s2', view: 'overview', move: 'Protect', type: 'Any type', opponent: 'Any opponent', start: 'All sets' };
 const comparison = {};
 const rosterViews = {};
 const quickScopes = {overall:'Overall',s1all:'Season 1',s2:'Season 2',mono:'Monotype'};
@@ -502,13 +520,13 @@ function ratings(p) {
 function scoutingProfile(id,p) {
   const reviewed=scoutingReview?.profiles[id];
   const scout=reviewed??p.currentScouting;
-  const sample=reviewed
+  const sample=scout.sampleLabel??(reviewed
     ? scoutingReview.through+' · '+scout.games+' games across '+scout.sets+' sets · '+scout.weekFiveGames+' games after the trade window'
-    : 'Season 2 · Weeks 1–4 replay sample';
+    : 'Season 2 · Weeks 1–4 replay sample');
   const observations=scout.points.map(x=>'<li><strong>'+esc(x.title)+'</strong><p>'+esc(x.text)+'</p>'+
     (x.prep?'<p class="prep"><strong>Match prep</strong> '+esc(x.prep)+'</p>':'')+evidenceLine(p,x.evidence)+'</li>').join('');
   return '<div class="grid">'+
-    panel('What to Scout This Season',note(sample)+
+    panel(scout.sampleLabel?'Historical Scouting Report':'What to Scout This Season',note(sample)+
       '<ol class="scout-points">'+observations+'</ol>','wide')+
     panel('Current Strength and Weakness',
       '<p class="copy"><strong>Strength</strong> '+esc(scout.strength.text)+'</p>'+evidenceLine(p,scout.strength.evidence)+
@@ -700,8 +718,11 @@ function rosterPicker(p,scope,interactive) {
 }
 function comparisonState(p) {
   const key=Object.keys(archive.coaches).find(id=>archive.coaches[id]===p);
-  const [left,right]=p.games.some(scopes.s1)?['s1w4','s2']:['early','later'];
-  return comparison[key]??= [{preset:left,sets:[],competition:'S2 regular',from:1,to:4},{preset:right,sets:[],competition:'S2 regular',from:1,to:4}];
+  const hasS1=p.games.some(scopes.s1),hasS2=p.games.some(scopes.s2);
+  const [left,right]=hasS1?(hasS2?['s1w4','s2']:['s1w4','s1late']):['early','later'];
+  const competition=hasS2?'S2 regular':'S1 regular';
+  const to=Math.max(...p.games.filter(g=>g.season===competition).map(g=>g.week));
+  return comparison[key]??= [{preset:left,sets:[],competition,from:1,to},{preset:right,sets:[],competition,from:1,to}];
 }
 function comparisonColumn(p,index,interactive) {
   const side=comparisonState(p)[index];
@@ -739,19 +760,21 @@ function development(p,interactive=true) {
       row('Game record',c=>c.wins+'–'+(c.games-c.wins)),row('Damage share',c=>percent(c.damage,c.moves)),row('Protect attempts',c=>c.protect+' / '+c.moves),
       row('Wide Guard attempts',c=>c.wide+' / '+c.games+' games'),row('Speed-control attempts',c=>c.speed+' / '+c.games+' games'),
       row('Opening-of-turn switches',c=>c.switches+' / '+c.games+' games'),row('Sets with a new lead',c=>c.leadChanges+' / '+c.multigame)
-    ])+note('Each column uses its own sample. Season 2 replays are archived through Week 4.')+included,'wide');
+    ])+note('Each column uses its own sample. Season 2 replays are archived through Week '+latestWeek+'.')+included,'wide');
 }
-function pokecenter(p,interactive=true) {
+function pokecenter(id,p,interactive=true) {
   const d=p.dossier;
+  const rival=update?.rivals[id];
   const featured=p.games.find(g=>g.url===d.replay);
   const featuredMon=d.signature_entries.slice(0,3).map(([name,n])=>[name,n+' regular-season games']);
-  return '<div class="pokecenter-banner"><h3 class="sr-only">POKECENTER</h3><span class="pokecenter-wordmark" aria-hidden="true"></span></div><div class="grid">'+panel(d.segment_title,
-    '<p class="meta">Showdown aliases · '+esc(d.showdown_aliases.join(', '))+'</p><p class="copy">'+esc(d.story)+'</p>'+
-    '<div class="clip"><strong>Featured replay</strong><p>'+esc(featured?(season(featured)+' · vs '+featured.opponent+' · Game '+featured.number+' · T'+d.turn_window):('Turns '+d.turn_window))+
+  return '<div class="pokecenter-banner"><h3 class="sr-only">POKECENTER</h3><span class="pokecenter-wordmark" aria-hidden="true"></span></div><div class="grid">'+panel('Notable Match',
+    '<div class="clip"><h3>'+esc(d.segment_title)+'</h3><p>'+esc(featured?(season(featured)+' · vs '+featured.opponent+' · Game '+featured.number+' · T'+d.turn_window):('Turns '+d.turn_window))+
     '</p><p>“'+esc(d.booth_line)+'”</p>'+urlLink(d.replay,'Watch on Showdown')+'</div>')+
-    panel('Signature Pokémon and rivalries',table(['Pokémon','Appearances'],featuredMon,{0:pokemonName})+
-      '<p class="copy">'+esc(d.rivalry)+'</p>'+evidenceLine(p,d.rivalryEvidence)+
-      (interactive?note('Featured stories draw from the full archive. The replay sample filter applies to Overview and Scouting.') : ''))+'</div>';
+    panel('Signature Pokémon',table(['Pokémon','Appearances'],featuredMon,{0:pokemonName})+
+      '<p class="meta">Showdown aliases · '+esc(d.showdown_aliases.join(', '))+'</p><p class="copy">'+esc(d.story)+'</p>'+
+      (rival?'<h3 class="rival-heading">Official rival · '+esc(rival.name)+'</h3><p class="copy">'+esc(rival.text)+'</p>'+evidenceLine(p,rival.evidence):
+        '<p class="copy">'+esc(d.rivalry)+'</p>'+evidenceLine(p,d.rivalryEvidence??[]))+
+      (interactive?note('Archive pick as of Season 2 Week '+latestWeek+'. Rivalries can change as new sets are played.') : ''))+'</div>';
 }
 function coachHeader(p) {
   return '<h2>'+esc(p.name)+'</h2><p class="style">'+esc(p.style)+'</p>';
@@ -783,14 +806,18 @@ function staticPreview() {
         '<div class="static-samples">'+panels+'</div></div>'+
         '<section class="group" id="'+esc(id)+'-development">'+development(p,false)+
         note('Open the downloaded HTML in a browser to choose your comparison samples.')+'</section>'+
-        '<section class="group pokecenter-section" id="'+esc(id)+'-pokecenter">'+pokecenter(p,false)+'</section></article>';
+        '<section class="group pokecenter-section" id="'+esc(id)+'-pokecenter">'+pokecenter(id,p,false)+'</section></article>';
     }).join('')+'</div>';
 }
 
 function render() {
   const p=archive.coaches[state.coach];
-  const scope=scopeSelect.value;
+  const scope=state.scope;
   const games=p.games.filter(scopes[scope]);
+  const competition=scope==='mono'?'mono':scope==='s1all'||(!p.games.some(scopes.s2)&&scope==='overall')?'s1':'s2';
+  const coachQuery='?coach='+encodeURIComponent(state.coach)+'&season='+competition;
+  byId('scouting-matches').href='matches.html'+coachQuery;
+  byId('coach-overview').href='coaches.html'+coachQuery+'#profile';
   byId('summary').innerHTML=summary(games,scope);
   for(const button of nav.querySelectorAll('button'))button.setAttribute('aria-pressed',String(button.dataset.view===state.view));
   const scopesMarkup=scopeButtons(p,scope,true);
@@ -802,17 +829,13 @@ function renderDevelopment(p) {
   byId('development').innerHTML=development(p);
 }
 function coachChange() {
-  const p=archive.coaches[state.coach];const prior=scopeSelect.value;
-  byId('scouting-matches').href='matches.html?coach='+encodeURIComponent(state.coach);
-  byId('coach-overview').href='coaches.html?coach='+encodeURIComponent(state.coach)+'#profile';
+  const p=archive.coaches[state.coach];
   for(const btn of coachSelect.querySelectorAll('button'))btn.setAttribute('aria-pressed',String(btn.dataset.coach===state.coach));
   byId('coach-header').innerHTML=coachHeader(p);
   byId('scouting-profile').innerHTML=scoutingProfile(state.coach,p);
   renderDevelopment(p);
-  byId('pokecenter').innerHTML=pokecenter(p);
-  const options=sampleOptions(p);
-  scopeSelect.innerHTML=options.map(k=>'<option value="'+k+'">'+esc(labels[k])+'</option>').join('');
-  scopeSelect.value=options.includes(prior)?prior:'s2';
+  byId('pokecenter').innerHTML=pokecenter(state.coach,p);
+  if (!p.games.some(scopes[state.scope]))state.scope=p.games.some(scopes.s2)?'s2':'s1all';
   state.opponent='Any opponent';state.type='Any type';render();
 }
 function init() {
@@ -823,16 +846,15 @@ coachSelect.addEventListener('click',e=>{
   state.coach=id;
   coachChange();
 });
-scopeSelect.addEventListener('change',()=>{state.opponent='Any opponent';state.type='Any type';render();});
 nav.addEventListener('click',e=>{const view=e.target.dataset.view;if(view){state.view=view;render();}});
 function changeQuickScope(e, container) {
   const button=e.target.closest('button[data-scope]');
   if(!button||button.disabled)return;
   const scope=button.dataset.scope;
-  if(scopeSelect.value===scope)return;
+  if(state.scope===scope)return;
   const section=button.closest('.panel')?.querySelector('h2')?.textContent;
   const priorTop=button.getBoundingClientRect().top;
-  scopeSelect.value=scope;
+  state.scope=scope;
   state.opponent='Any opponent';state.type='Any type';render();
   const choices=[...container.querySelectorAll('button[data-scope="'+scope+'"]')];
   const replacement=choices.find(b=>b.closest('.panel')?.querySelector('h2')?.textContent===section);
